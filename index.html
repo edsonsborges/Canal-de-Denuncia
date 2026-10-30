@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canal de Denúncias Corporativo - AF Datalink</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel para transcompilar JSX no navegador -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- Componente de Ícone Seguro com SVGs Inline para evitar conflitos com Lucide React Bundle ---
+    const Icon = ({ name, size = 20, className = "" }) => {
+      const icons = {
+        ShieldCheck: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/>,
+        Lock: <path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zm-7 0V7a5 5 0 0 0-10 0v4"/>,
+        AlertTriangle: <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3zM12 9v4M12 17h.01"/>,
+        FileText: <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>,
+        Send: <path d="m22 2-7 20-4-9-9-4Zm0 0L11 13"/>,
+        UploadCloud: <path d="M4 14.89 4.13 15a5 5 0 0 0 9.87 1H15a5 5 0 0 0 4.22-7.66 4.5 4.5 0 0 0-7.83-3.69A5 5 0 0 0 2 12c0 1.05.3 2.05.84 2.89ZM12 12v9M16 16l-4-4-4 4"/>,
+        Search: <path d="m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/>,
+        MessageSquare: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+        CheckCircle: <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3"/>,
+        Clock: <path d="M12 6v6l4 2M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/>,
+        BarChart3: <path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>,
+        Users: <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>,
+        ChevronRight: <path d="m9 18 6-6-6-6"/>,
+        X: <path d="M18 6 6 18M6 6l12 12"/>,
+        File: <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2zM14 2v6h6"/>,
+        Download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>,
+        Key: <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>,
+        LogOut: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>,
+        Mail: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6"/>,
+        Info: <path d="M12 16v-4M12 8h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/>
+      };
+
+      const path = icons[name];
+      if (!path) return null;
+
+      return (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width={size} 
+          height={size} 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          className={className}
+        >
+          {path}
+        </svg>
+      );
+    };
+
+    // --- UTILITÁRIOS ---
+    const generateToken = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const segment = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      return `DLK-${segment()}-${segment()}`;
+    };
+
+    const formatDate = (date) => {
+      return new Date(date).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    };
+
+    const CATEGORIAS = [
+      "Assédio moral", "Assédio sexual", "Corrupção", "Fraudes",
+      "Violação ética", "Discriminação", "Conflito de interesse",
+      "Vazamento de informações", "Descumprimento de normas internas", "Outros"
+    ];
+
+    const mockInitialReports = [
+      {
+        id: 1,
+        token: 'DLK-A1B2-C3D4',
+        categoria: 'Assédio moral',
+        descricao: 'Presenciei o gerente gritando com um funcionário na frente de todos na reunião de sexta-feira.',
+        dataOcorrido: '2026-05-22',
+        local: 'Sala de Reuniões 3',
+        envolvidos: 'Gerente Carlos, Analista João',
+        urgente: false,
+        status: 'Em análise',
+        dataCriacao: new Date(Date.now() - 86400000 * 2).toISOString(),
+        anexos: [{ name: 'audio_reuniao.mp3', size: '2.4 MB' }],
+        mensagens: [
+          { sender: 'user', text: 'Gostaria de relatar este incidente. Tenho muito medo de retaliação.', date: new Date(Date.now() - 86400000 * 2).toISOString() },
+          { sender: 'admin', text: 'Agradecemos sua coragem em relatar. Garantimos total anonimato. Você teria a gravação que mencionou?', date: new Date(Date.now() - 86400000 * 1.5).toISOString() },
+          { sender: 'user', text: 'Sim, anexei na denúncia original.', date: new Date(Date.now() - 86400000 * 1).toISOString() }
+        ]
+      },
+      {
+        id: 2,
+        token: 'DLK-X9Y8-Z7W6',
+        categoria: 'Fraudes',
+        descricao: 'Desvios de notas fiscais no setor de compras.',
+        dataOcorrido: '2026-05-01',
+        local: 'Departamento Financeiro',
+        envolvidos: 'Diretor Financeiro',
+        urgente: true,
+        status: 'Nova',
+        dataCriacao: new Date().toISOString(),
+        anexos: [],
+        mensagens: [
+          { sender: 'user', text: 'Há um esquema de notas frias ocorrendo há meses.', date: new Date().toISOString() }
+        ]
+      }
+    ];
+
+    const Button = ({ children, onClick, variant = 'primary', className = '', type = 'button', disabled = false }) => {
+      const baseStyle = "px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+      const variants = {
+        primary: "bg-blue-900 hover:bg-blue-800 text-white focus:ring-blue-900",
+        secondary: "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 focus:ring-slate-500",
+        danger: "bg-red-600 hover:bg-red-700 text-white focus:ring-red-600",
+        ghost: "bg-transparent hover:bg-slate-100 text-blue-900 focus:ring-blue-900"
+      };
+      return (
+        <button type={type} onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
+          {children}
+        </button>
+      );
+    };
+
+    const StatusBadge = ({ status }) => {
+      const colors = {
+        'Nova': 'bg-blue-100 text-blue-800 border-blue-200',
+        'Em análise': 'bg-amber-100 text-amber-800 border-amber-200',
+        'Respondida': 'bg-purple-100 text-purple-800 border-purple-200',
+        'Finalizada': 'bg-emerald-100 text-emerald-800 border-emerald-200'
+      };
+      return (
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+          {status}
+        </span>
+      );
+    };
+
+    function App() {
+      const [currentView, setCurrentView] = useState('home');
+      const [reports, setReports] = useState(mockInitialReports);
+      const [activeReport, setActiveReport] = useState(null);
+      const [lastGeneratedToken, setLastGeneratedToken] = useState('');
+      const [isAdminAuth, setIsAdminAuth] = useState(false);
+      const [toastMessage, setToastMessage] = useState('');
+      const [emailLogs, setEmailLogs] = useState([
+        {
+          id: 1,
+          to: 'edson@afdatalink.com.br',
+          subject: '[Canal de Denúncias] Notificação de Sistema',
+          body: 'Sistema de notificações ativo e monitorando novas ocorrências.',
+          date: new Date(Date.now() - 86400000 * 2).toISOString()
+        }
+      ]);
+      const [showEmailLogsDrawer, setShowEmailLogsDrawer] = useState(false);
+
+      const showToast = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(''), 4000);
+      };
+
+      const triggerEmailNotification = (to, subject, body) => {
+        const newLog = {
+          id: Date.now(),
+          to,
+          subject,
+          body,
+          date: new Date().toISOString()
+        };
+        setEmailLogs(prev => [newLog, ...prev]);
+        showToast(`Notificação de e-mail enviada para ${to}!`);
+      };
+
+      const navigateTo = (view, report = null) => {
+        setCurrentView(view);
+        if (report) setActiveReport(report);
+      };
+
+      const HomeView = () => (
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight mb-6">
+                Ambiente seguro, ético e <span className="text-blue-900">100% Anônimo.</span>
+              </h1>
+              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+                Este é um canal exclusivo e confidencial para comunicação segura de condutas que violem as normas éticas ou a legislação vigente. Garantimos sigilo absoluto e proteção contra retaliação.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4">
+                <Button onClick={() => navigateTo('new_report')} className="text-lg px-6 py-4">
+                  <Icon name="ShieldCheck" size={24} />
+                  Fazer uma denúncia
+                </Button>
+                <Button onClick={() => navigateTo('track_report')} variant="secondary" className="text-lg px-6 py-4">
+                  <Icon name="Search" size={24} />
+                  Acompanhar denúncia
+                </Button>
+                <Button onClick={() => navigateTo('respond_list')} variant="ghost" className="text-lg px-6 py-4 border border-blue-900/20 text-blue-950 hover:bg-blue-50">
+                  <Icon name="MessageSquare" size={24} className="text-blue-900" />
+                  Responder denúncia
+                </Button>
+              </div>
+
+              <div className="mt-8 flex items-center gap-2 text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <Icon name="Lock" className="text-green-600" size={20} />
+                <p><strong>Nenhum dado pessoal é coletado.</strong> Não registramos seu IP, localização, nome ou e-mail.</p>
+              </div>
+            </div>
+
+            <div className="hidden md:block">
+              <div className="bg-gradient-to-br from-blue-900 to-slate-800 p-8 rounded-2xl shadow-2xl text-white transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                <div className="flex justify-between items-center mb-8 border-b border-white/20 pb-4">
+                  <span className="font-bold text-xl tracking-wider">AF Datalink</span>
+                  <Icon name="ShieldCheck" className="text-blue-300" size={32} />
+                </div>
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-white/10 p-3 rounded-lg"><Icon name="Lock" size={24} /></div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Criptografia de Ponta</h3>
+                      <p className="text-blue-100 text-sm">Seus dados são protegidos com os mais altos padrões de segurança.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="bg-white/10 p-3 rounded-lg"><Icon name="Users" size={24} /></div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Análise Independente</h3>
+                      <p className="text-blue-100 text-sm">Comitê de ética isento e treinado para tratar cada caso.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="bg-white/10 p-3 rounded-lg"><Icon name="MessageSquare" size={24} /></div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Comunicação Anônima</h3>
+                      <p className="text-blue-100 text-sm">Converse com os investigadores usando apenas um Token gerado.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      const ReportFormView = () => {
+        const [formData, setFormData] = useState({
+          categoria: '', descricao: '', dataOcorrido: '', local: '', envolvidos: '', urgente: false
+        });
+        const [files, setFiles] = useState([]);
+        const [isSubmitting, setIsSubmitting] = useState(false);
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          setIsSubmitting(true);
+          
+          setTimeout(() => {
+            const token = generateToken();
+            const newReport = {
+              id: Date.now(),
+              token,
+              ...formData,
+              status: 'Nova',
+              dataCriacao: new Date().toISOString(),
+              anexos: files.map(f => ({ name: f.name, size: (f.size / 1024 / 1024).toFixed(2) + ' MB' })),
+              mensagens: [{ sender: 'user', text: formData.descricao, date: new Date().toISOString() }]
+            };
+            
+            setReports(prev => [newReport, ...prev]);
+            setLastGeneratedToken(token);
+            setIsSubmitting(false);
+
+            const subject = `[NOVA DENÚNCIA] Categoria: ${formData.categoria} - Token: ${token}`;
+            const body = `Olá Edson,\n\nUma nova denúncia foi registrada no Canal de Denúncias da AF Datalink.\n\nCategoria: ${formData.categoria}\nDescrição: ${formData.descricao.substring(0, 150)}...\nUrgente: ${formData.urgente ? 'SIM' : 'NÃO'}\n\nLink direto para visualizar e responder à denúncia:\nhttps://compliance.afdatalink.com.br/report/${token}\n\nEste é um e-mail automático do sistema de ética e compliance.`;
+            triggerEmailNotification('edson@afdatalink.com.br', subject, body);
+
+            navigateTo('token_success');
+          }, 1200);
+        };
+
+        return (
+          <div className="max-w-3xl mx-auto px-4 py-8">
+            <button onClick={() => navigateTo('home')} className="text-blue-900 font-semibold mb-6 flex items-center hover:underline">
+              &larr; Voltar ao início
+            </button>
+            
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <div className="bg-blue-900 p-6 text-white">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Icon name="AlertTriangle" /> Nova Denúncia
+                </h2>
+                <p className="text-blue-200 mt-2">Preencha os dados abaixo. Quanto mais detalhes, melhor será a apuração.</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex gap-3 text-sm mb-6">
+                  <Icon name="Lock" className="shrink-0 mt-0.5" size={18} />
+                  <p><strong>Aviso de Privacidade:</strong> Não inclua seus dados pessoais (nome, matrícula, etc) nos textos ou arquivos caso deseje manter o anonimato absoluto.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Qual a natureza da denúncia? *</label>
+                  <select required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 bg-slate-50"
+                    onChange={e => setFormData({...formData, categoria: e.target.value})}>
+                    <option value="">Selecione uma categoria...</option>
+                    {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Descrição detalhada do ocorrido *</label>
+                  <textarea required rows="5" placeholder="Descreva o que aconteceu, como, com quem e outras informações relevantes..."
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 bg-slate-50"
+                    onChange={e => setFormData({...formData, descricao: e.target.value})} maxLength={3000}></textarea>
+                  <div className="text-right text-xs text-slate-500 mt-1">{formData.descricao.length}/3000 caracteres</div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Data ou período aproximado</label>
+                    <input type="date" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 bg-slate-50"
+                      onChange={e => setFormData({...formData, dataOcorrido: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Local (Físico ou Digital)</label>
+                    <input type="text" placeholder="Ex: Filial SP, Teams, E-mail..." className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 bg-slate-50"
+                      onChange={e => setFormData({...formData, local: e.target.value})} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Pessoas envolvidas (Cargos ou Setores)</label>
+                  <input type="text" placeholder="Evite colocar seu próprio nome se quiser anonimato" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 bg-slate-50"
+                    onChange={e => setFormData({...formData, envolvidos: e.target.value})} />
+                </div>
+
+                <div className="border-t border-slate-200 pt-6">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Anexar evidências (Fotos, Vídeos, Documentos, Áudios)</label>
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition-colors relative">
+                    <input type="file" multiple className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                      onChange={e => setFiles([...files, ...Array.from(e.target.files)])} />
+                    <Icon name="UploadCloud" className="mx-auto text-slate-400 mb-2" size={32} />
+                    <p className="text-sm font-medium text-slate-700">Clique ou arraste arquivos aqui</p>
+                    <p className="text-xs text-slate-500 mt-1">PNG, JPG, PDF, MP4, MP3 (Max 20MB)</p>
+                  </div>
+                  
+                  {files.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {files.map((f, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200 text-sm">
+                          <div className="flex items-center gap-2"><Icon name="File" size={16} className="text-blue-900"/> {f.name}</div>
+                          <button type="button" onClick={() => setFiles(files.filter((_, i) => i !== idx))} className="text-red-500 hover:text-red-700"><Icon name="X" size={16}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <input type="checkbox" id="urgente" className="w-5 h-5 text-blue-900 rounded focus:ring-blue-900" 
+                    onChange={e => setFormData({...formData, urgente: e.target.checked})} />
+                  <label htmlFor="urgente" className="text-sm font-semibold text-slate-700 cursor-pointer">
+                    Marcar como Urgente (Risco iminente de vida, integridade ou fraude em andamento)
+                  </label>
+                </div>
+
+                <div className="border-t border-slate-200 pt-6">
+                  <Button type="submit" className="w-full text-lg" disabled={isSubmitting}>
+                    {isSubmitting ? 'Criptografando e Enviando...' : 'Enviar Denúncia Anonimamente'}
+                    {!isSubmitting && <Icon name="Send" size={20} />}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      };
+
+      const RespondListView = () => {
+        return (
+          <div className="max-w-5xl mx-auto px-4 py-8">
+            <button onClick={() => navigateTo('home')} className="text-blue-900 font-semibold mb-6 flex items-center hover:underline">
+              &larr; Voltar ao início
+            </button>
+
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <div className="bg-blue-900 p-6 text-white flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Icon name="MessageSquare" /> Responder Denúncias
+                  </h2>
+                  <p className="text-blue-200 mt-1">Selecione uma das ocorrências abaixo para responder de forma segura.</p>
+                </div>
+                <button 
+                  onClick={() => setShowEmailLogsDrawer(true)} 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-800 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                >
+                  <Icon name="Mail" size={14}/> Ver Logs de E-mail
+                </button>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-b border-slate-200 text-slate-600 text-sm flex items-center gap-3">
+                <Icon name="Info" className="text-blue-900 shrink-0" size={20} />
+                <p>Esta visão lista todas as denúncias enviadas ao sistema. Ao responder, suas mensagens serão enviadas para o painel anônimo do denunciante e uma notificação de e-mail será registrada para <strong>edson@afdatalink.com.br</strong>.</p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
+                      <th className="p-4">Token de Acesso</th>
+                      <th className="p-4">Natureza / Categoria</th>
+                      <th className="p-4">Data Registro</th>
+                      <th className="p-4">Urgente</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {reports.map((r) => (
+                      <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-4 font-mono font-bold text-blue-900 text-sm">
+                          {r.token}
+                        </td>
+                        <td className="p-4 text-sm text-slate-800 font-medium">
+                          {r.categoria}
+                        </td>
+                        <td className="p-4 text-sm text-slate-500">
+                          {new Date(r.dataCriacao).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="p-4">
+                          {r.urgente ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                              <Icon name="AlertTriangle" size={12}/> Sim
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-400">Não</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <StatusBadge status={r.status} />
+                        </td>
+                        <td className="p-4">
+                          <Button 
+                            variant="primary" 
+                            className="py-1 px-3 text-xs font-bold bg-blue-900 hover:bg-blue-800 text-white" 
+                            onClick={() => navigateTo('admin_report', r)}
+                          >
+                            Responder <Icon name="ChevronRight" size={14}/>
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                    {reports.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="p-8 text-center text-slate-500">Nenhuma denúncia registrada até o momento.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const TokenSuccessView = () => {
+        const copyToClipboard = () => {
+          try {
+            const textArea = document.createElement("textarea");
+            textArea.value = lastGeneratedToken;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-99999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast('Token copiado para a área de transferência!');
+          } catch (err) {
+            showToast('Erro ao copiar token. Por favor, copie manualmente.');
+          }
+        };
+
+        const handlePrint = () => {
+          window.print();
+        };
+
+        return (
+          <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+            <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12 border border-slate-100 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
+              
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                <Icon name="CheckCircle" size={40} />
+              </div>
+              
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">Denúncia Recebida!</h2>
+              <p className="text-slate-600 mb-4">Sua denúncia foi registrada de forma segura e totalmente anônima.</p>
+
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-sm max-w-lg mx-auto mb-6 flex items-center gap-3">
+                <Icon name="Mail" className="text-emerald-600 shrink-0" size={24} />
+                <div className="text-left">
+                  <p className="font-bold">Notificação de Segurança Enviada!</p>
+                  <p className="text-xs opacity-90">Um e-mail foi disparado para <strong>edson@afdatalink.com.br</strong> para garantir que o comitê inicie a análise imediatamente.</p>
+                </div>
+              </div>
+              
+              <div className="bg-slate-900 rounded-xl p-8 mb-8 text-white relative shadow-inner">
+                <p className="text-sm text-slate-400 font-semibold mb-2 uppercase tracking-widest">Seu Token de Acesso</p>
+                <div className="text-4xl md:text-5xl font-mono font-bold tracking-wider break-all">
+                  {lastGeneratedToken}
+                </div>
+              </div>
+
+              <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm mb-8 font-medium border border-amber-200">
+                <Icon name="AlertTriangle" className="inline mr-2 -mt-1" size={18} />
+                Guarde este token com segurança. Ele é a <strong className="underline">única forma</strong> de acompanhar o andamento da sua denúncia, ler as respostas dos investigadores e enviar novas informações. Se perder o token, perderá o acesso.
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button onClick={copyToClipboard} variant="secondary">Copiar Token</Button>
+                <Button onClick={handlePrint} variant="secondary"><Icon name="Download" size={18} /> Salvar PDF</Button>
+                <Button onClick={() => navigateTo('home')}>Concluir</Button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const TrackReportView = () => {
+        const [inputToken, setInputToken] = useState('');
+        const [error, setError] = useState('');
+
+        const handleSearch = (e) => {
+          e.preventDefault();
+          const report = reports.find(r => r.token === inputToken.trim());
+          if (report) {
+            navigateTo('chat_view', report);
+          } else {
+            setError('Token inválido ou não encontrado. Verifique e tente novamente.');
+          }
+        };
+
+        return (
+          <div className="max-w-xl mx-auto px-4 py-16">
+            <button onClick={() => navigateTo('home')} className="text-blue-900 font-semibold mb-6 flex items-center hover:underline">
+              &larr; Voltar ao início
+            </button>
+
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-900">
+                <Icon name="Search" size={32} />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Acompanhar Denúncia</h2>
+              <p className="text-slate-600 mb-8">Insira o seu token de acesso para verificar o status, ler respostas ou adicionar informações.</p>
+
+              <form onSubmit={handleSearch} className="space-y-4">
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: DLK-8F4X-92AB" 
+                    className="w-full text-center text-xl font-mono p-4 border-2 border-slate-300 rounded-xl focus:border-blue-900 focus:ring-0 uppercase tracking-widest"
+                    value={inputToken}
+                    onChange={e => { setInputToken(e.target.value); setError(''); }}
+                    required
+                  />
+                  {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
+                </div>
+                <Button type="submit" className="w-full text-lg py-4">
+                  Acessar Denúncia
+                </Button>
+              </form>
+            </div>
+          </div>
+        );
+      };
+
+      const ChatView = ({ isAdmin = false }) => {
+        const [newMessage, setNewMessage] = useState('');
+        const chatEndRef = useRef(null);
+        const report = activeReport;
+
+        const scrollToBottom = () => {
+          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        useEffect(() => {
+          scrollToBottom();
+        }, [report.mensagens]);
+
+        const handleSendMessage = (e) => {
+          e.preventDefault();
+          if (!newMessage.trim()) return;
+
+          const msg = {
+            sender: isAdmin ? 'admin' : 'user',
+            text: newMessage,
+            date: new Date().toISOString()
+          };
+
+          const updatedReport = { ...report, mensagens: [...report.mensagens, msg] };
+          
+          setReports(reports.map(r => r.id === report.id ? updatedReport : r));
+          setActiveReport(updatedReport);
+          setNewMessage('');
+
+          if (!isAdmin) {
+            const subject = `[NOVA MENSAGEM] Resposta recebida para o Token: ${report.token}`;
+            const body = `Olá Edson,\n\nO denunciante anônimo enviou uma nova resposta na denúncia sobre "${report.categoria}" (Token: ${report.token}).\n\nMensagem: "${msg.text.substring(0, 150)}..."\n\nResponda agora clicando no link abaixo:\nhttps://compliance.afdatalink.com.br/report/${report.token}`;
+            triggerEmailNotification('edson@afdatalink.com.br', subject, body);
+          }
+        };
+
+        const handleChangeStatus = (e) => {
+          const newStatus = e.target.value;
+          const updatedReport = { ...report, status: newStatus };
+          setReports(reports.map(r => r.id === report.id ? updatedReport : r));
+          setActiveReport(updatedReport);
+          showToast('Status atualizado com sucesso.');
+
+          const subject = `[ALTERAÇÃO DE STATUS] Denúncia ${report.token} alterada para ${newStatus}`;
+          const body = `Olá Edson,\n\nO status da denúncia de Token: ${report.token} (${report.categoria}) foi alterado para: ${newStatus}.\n\nGerencie pelo link:\nhttps://compliance.afdatalink.com.br/report/${report.token}`;
+          triggerEmailNotification('edson@afdatalink.com.br', subject, body);
+        };
+
+        return (
+          <div className="max-w-4xl mx-auto px-4 py-8 h-screen flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <button onClick={() => navigateTo(isAdmin ? 'admin_dashboard' : 'home')} className="text-slate-600 font-semibold flex items-center hover:text-blue-900">
+                &larr; Voltar
+              </button>
+              {!isAdmin && <div className="text-sm bg-blue-100 text-blue-900 px-3 py-1 rounded-full font-mono font-bold">{report.token}</div>}
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-0">
+              
+              <div className="bg-slate-50 border-b border-slate-200 p-6">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">{report.categoria}</h2>
+                    <p className="text-sm text-slate-500">Enviada em {formatDate(report.dataCriacao)}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {isAdmin ? (
+                      <select value={report.status} onChange={handleChangeStatus} className="text-sm font-semibold border-slate-300 rounded-lg bg-white focus:ring-blue-900">
+                        <option value="Nova">Nova</option>
+                        <option value="Em análise">Em análise</option>
+                        <option value="Respondida">Respondida</option>
+                        <option value="Finalizada">Finalizada</option>
+                      </select>
+                    ) : (
+                      <StatusBadge status={report.status} />
+                    )}
+                    {report.urgente && <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold flex items-center gap-1"><Icon name="AlertTriangle" size={14}/> Urgente</span>}
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-slate-200 text-sm space-y-2 mb-2">
+                  <p><strong>Detalhes da Ocorrência:</strong></p>
+                  <div className="grid grid-cols-2 gap-2 text-slate-700">
+                    <p><strong>Local:</strong> {report.local || 'N/A'}</p>
+                    <p><strong>Data ocorrido:</strong> {report.dataOcorrido ? formatDate(report.dataOcorrido) : 'N/A'}</p>
+                    <p className="col-span-2"><strong>Envolvidos:</strong> {report.envolvidos || 'N/A'}</p>
+                  </div>
+                  {report.anexos?.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <p className="font-semibold mb-1">Anexos:</p>
+                      {report.anexos.map((a, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 mr-3 text-blue-600 bg-blue-50 px-2 py-1 rounded"><Icon name="File" size={14}/> {a.name} ({a.size})</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-100">
+                {!isAdmin && (
+                  <div className="text-center mb-6">
+                    <span className="inline-block bg-blue-900/10 text-blue-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      Início da Comunicação Criptografada
+                    </span>
+                    <p className="text-xs text-slate-500 mt-2">Os investigadores não sabem quem você é. Mantenha o anonimato nas suas mensagens.</p>
+                  </div>
+                )}
+
+                {report.mensagens.map((msg, idx) => {
+                  const isMe = isAdmin ? msg.sender === 'admin' : msg.sender === 'user';
+                  return (
+                    <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] md:max-w-[70%] rounded-2xl p-4 shadow-sm ${isMe ? 'bg-blue-900 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'}`}>
+                        <div className="flex items-center gap-2 mb-1 text-xs opacity-80">
+                          {msg.sender === 'user' ? <Icon name="Lock" size={12}/> : <Icon name="ShieldCheck" size={12}/>}
+                          <span className="font-bold">{msg.sender === 'user' ? 'Denunciante Anônimo' : 'Comitê de Ética (Investigador)'}</span>
+                        </div>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
+                        <div className="text-[10px] text-right mt-2 opacity-60">
+                          {formatDate(msg.date)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={chatEndRef} />
+              </div>
+
+              {report.status !== 'Finalizada' ? (
+                 <div className="p-4 bg-white border-t border-slate-200">
+                   <form onSubmit={handleSendMessage} className="flex gap-2">
+                     <textarea 
+                       rows="1"
+                       placeholder={isAdmin ? "Enviar resposta ao denunciante..." : "Enviar nova mensagem anonimamente..."}
+                       className="flex-1 resize-none p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-900 focus:outline-none bg-slate-50"
+                       value={newMessage}
+                       onChange={e => setNewMessage(e.target.value)}
+                       onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
+                     ></textarea>
+                     <Button type="submit" className="px-4 py-3 rounded-xl"><Icon name="Send" size={20}/></Button>
+                   </form>
+                   <p className="text-xs text-slate-400 mt-2 text-center">Pressione Enter para enviar. Shift + Enter para quebrar linha.</p>
+                 </div>
+              ) : (
+                <div className="p-4 bg-slate-200 border-t border-slate-300 text-center text-slate-600 font-medium">
+                  Esta denúncia foi encerrada. O canal de comunicação está fechado.
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      const AdminLoginView = () => {
+        const [step, setStep] = useState(1);
+        const [pin, setPin] = useState('');
+
+        const handleLogin = (e) => {
+          e.preventDefault();
+          setStep(2);
+        };
+
+        const handle2FA = (e) => {
+          e.preventDefault();
+          setIsAdminAuth(true);
+          navigateTo('admin_dashboard');
+        };
+
+        return (
+          <div className="min-h-[80vh] flex items-center justify-center px-4">
+            <div className="bg-white p-8 rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full relative overflow-hidden">
+              <button onClick={() => navigateTo('home')} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><Icon name="X" size={24}/></button>
+              
+              <div className="text-center mb-8">
+                 <Icon name="ShieldCheck" size={48} className="text-blue-900 mx-auto mb-4" />
+                 <h2 className="text-2xl font-bold text-slate-900">Painel Administrativo</h2>
+                 <p className="text-slate-500 text-sm mt-1">Acesso restrito ao Comitê de Ética</p>
+              </div>
+
+              {step === 1 ? (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">E-mail Corporativo</label>
+                    <input type="email" required defaultValue="admin@compliance.com" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 bg-slate-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Senha</label>
+                    <input type="password" required defaultValue="********" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 bg-slate-50" />
+                  </div>
+                  <Button type="submit" className="w-full mt-4">Entrar</Button>
+                </form>
+              ) : (
+                <form onSubmit={handle2FA} className="space-y-4 text-center">
+                  <Icon name="Key" size={32} className="text-amber-500 mx-auto mb-4" />
+                  <h3 className="font-semibold text-slate-800">Autenticação em 2 Fatores (2FA)</h3>
+                  <p className="text-sm text-slate-500 mb-4">Insira o código de 6 dígitos gerado no seu app autenticador.</p>
+                  
+                  <input 
+                    type="text" 
+                    maxLength="6" 
+                    required 
+                    placeholder="000000"
+                    className="w-full text-center text-3xl font-mono tracking-widest p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 bg-slate-50"
+                    value={pin}
+                    onChange={e => setPin(e.target.value.replace(/\D/g, ''))}
+                  />
+                  <Button type="submit" className="w-full mt-4" disabled={pin.length < 6}>Verificar Código</Button>
+                </form>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      const AdminDashboardView = () => {
+        const total = reports.length;
+        const novas = reports.filter(r => r.status === 'Nova').length;
+        const emAnalise = reports.filter(r => r.status === 'Em análise').length;
+        const urgentes = reports.filter(r => r.urgente).length;
+
+        return (
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">Dashboard de Compliance</h1>
+                <p className="text-slate-500 text-sm">Visão geral e monitoramento das denúncias registradas.</p>
+              </div>
+              <div className="flex gap-3 mt-4 md:mt-0">
+                <button 
+                  onClick={() => setShowEmailLogsDrawer(true)} 
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold text-sm transition-colors"
+                >
+                  <Icon name="Mail" size={16}/> Logs de Notificação
+                </button>
+                <Button variant="secondary" className="py-2 text-sm"><Icon name="Download" size={16}/> Exportar Excel</Button>
+                <Button variant="ghost" onClick={() => { setIsAdminAuth(false); navigateTo('home'); }} className="text-red-600 hover:bg-red-50 py-2 text-sm"><Icon name="LogOut" size={16}/> Sair</Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-slate-500 font-semibold uppercase">Total Denúncias</p>
+                    <h3 className="text-3xl font-bold text-slate-900 mt-1">{total}</h3>
+                  </div>
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Icon name="FileText" size={20}/></div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-slate-500 font-semibold uppercase">Novas</p>
+                    <h3 className="text-3xl font-bold text-blue-600 mt-1">{novas}</h3>
+                  </div>
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Icon name="AlertTriangle" size={20}/></div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-slate-500 font-semibold uppercase">Em Análise</p>
+                    <h3 className="text-3xl font-bold text-amber-500 mt-1">{emAnalise}</h3>
+                  </div>
+                  <div className="p-3 bg-amber-50 text-amber-600 rounded-lg"><Icon name="Clock" size={20}/></div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-slate-500 font-semibold uppercase">Urgentes</p>
+                    <h3 className="text-3xl font-bold text-red-600 mt-1">{urgentes}</h3>
+                  </div>
+                  <div className="p-3 bg-red-50 text-red-600 rounded-lg"><Icon name="AlertTriangle" size={20}/></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-800">Todas as Ocorrências</h3>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                          <th className="p-4 font-semibold">Token / ID</th>
+                          <th className="p-4 font-semibold">Categoria</th>
+                          <th className="p-4 font-semibold">Data Registro</th>
+                          <th className="p-4 font-semibold">Status</th>
+                          <th className="p-4 font-semibold">Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {reports.sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao)).map((r) => (
+                          <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4">
+                              <div className="flex flex-col gap-1">
+                                <span className="font-mono font-bold text-sm text-blue-900 flex items-center gap-1">
+                                  {r.urgente && <Icon name="AlertTriangle" size={14} className="text-red-500" title="Urgente"/>}
+                                  {r.token}
+                                </span>
+                                <span className="text-[10px] text-slate-400">ID: #{r.id}</span>
+                              </div>
+                            </td>
+                            <td className="p-4 text-sm text-slate-700 font-medium">{r.categoria}</td>
+                            <td className="p-4 text-sm text-slate-500">{new Date(r.dataCriacao).toLocaleDateString('pt-BR')}</td>
+                            <td className="p-4"><StatusBadge status={r.status} /></td>
+                            <td className="p-4">
+                              <Button variant="ghost" className="p-2 py-1 text-sm bg-blue-50 text-blue-700" onClick={() => navigateTo('admin_report', r)}>
+                                Analisar <Icon name="ChevronRight" size={16}/>
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                        {reports.length === 0 && (
+                          <tr><td colSpan="5" className="p-8 text-center text-slate-500">Nenhuma denúncia encontrada.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Icon name="BarChart3" className="text-blue-900" size={24} />
+                    <h3 className="text-lg font-bold text-slate-800">Denúncias por Tipo</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-6">Frequência e divisão percentual de incidentes informados por categoria.</p>
+                  
+                  <div className="space-y-4">
+                    {CATEGORIAS.map(cat => {
+                      const count = reports.filter(r => r.categoria === cat).length;
+                      const percentage = total > 0 ? (count / total) * 100 : 0;
+                      
+                      return (
+                        <div key={cat} className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="font-semibold text-slate-700 truncate max-w-[200px]">{cat}</span>
+                            <span className="text-slate-500 font-bold">{count} ({percentage.toFixed(0)}%)</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2">
+                            <div 
+                              className="bg-blue-900 h-2 rounded-full transition-all duration-500" 
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-slate-800 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Icon name="Info" className="text-blue-900" size={20} />
+                    <h4 className="font-bold text-sm">Notificação Ativa para Edson</h4>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Toda nova denúncia gera um alerta por e-mail automático enviado para <strong>edson@afdatalink.com.br</strong> com o link direto e seguro de resposta rápida para a ocorrência correspondente.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      };
+
+      const EmailLogsDrawer = () => (
+        <div className={`fixed inset-0 bg-black/50 z-50 flex justify-end transition-opacity duration-300 ${showEmailLogsDrawer ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className="bg-white w-full max-w-lg h-full p-6 shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center border-b pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <Icon name="Mail" className="text-blue-900" size={24} />
+                <h3 className="text-lg font-bold text-slate-900">Histórico de E-mails Enviados</h3>
+              </div>
+              <button onClick={() => setShowEmailLogsDrawer(false)} className="text-slate-500 hover:text-slate-800"><Icon name="X" size={24}/></button>
+            </div>
+            
+            <p className="text-xs text-slate-500 mb-4">Simulação em tempo real dos e-mails disparados para <strong>edson@afdatalink.com.br</strong>.</p>
+            
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {emailLogs.map((log) => (
+                <div key={log.id} className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <span className="text-xs bg-blue-100 text-blue-900 px-2 py-0.5 rounded font-semibold">Enviado</span>
+                    <span className="text-[10px] text-slate-400">{formatDate(log.date)}</span>
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    <p><strong>De:</strong> compliance-no-reply@afdatalink.com.br</p>
+                    <p><strong>Para:</strong> {log.to}</p>
+                    <p className="mt-1 font-bold text-slate-800">Assunto: {log.subject}</p>
+                  </div>
+                  <div className="bg-white border p-3 rounded text-xs text-slate-600 font-mono whitespace-pre-wrap">
+                    {log.body}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+          {toastMessage && (
+            <div className="fixed top-4 right-4 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-xl font-medium z-50 animate-bounce flex items-center gap-2">
+              <Icon name="Mail" size={18}/>
+              {toastMessage}
+            </div>
+          )}
+
+          {EmailLogsDrawer()}
+
+          <style>{`
+            @media print {
+              body * { visibility: hidden; }
+              .max-w-2xl * { visibility: visible; }
+              .max-w-2xl { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; }
+              button { display: none !important; }
+            }
+          `}</style>
+
+          {!['admin_dashboard', 'admin_report'].includes(currentView) && (
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+              <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}>
+                  <div className="bg-blue-900 text-white p-2 rounded-lg">
+                    <Icon name="ShieldCheck" size={28} />
+                  </div>
+                  <div>
+                    <h1 className="font-extrabold text-xl text-slate-900 leading-tight">Canal de Denúncias</h1>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Corporativo & Ético</p>
+                  </div>
+                </div>
+                
+                <nav className="hidden md:flex items-center gap-6 font-semibold text-slate-600 text-sm">
+                  <button onClick={() => navigateTo('home')} className={`hover:text-blue-900 transition-colors ${currentView === 'home' ? 'text-blue-900' : ''}`}>Início</button>
+                  <button onClick={() => navigateTo('new_report')} className={`hover:text-blue-900 transition-colors ${currentView === 'new_report' ? 'text-blue-900' : ''}`}>Nova Denúncia</button>
+                  <button onClick={() => navigateTo('track_report')} className={`hover:text-blue-900 transition-colors ${currentView === 'track_report' ? 'text-blue-900' : ''}`}>Acompanhar</button>
+                  <button onClick={() => navigateTo('respond_list')} className={`hover:text-blue-900 transition-colors ${currentView === 'respond_list' ? 'text-blue-900' : ''}`}>Responder Denúncia</button>
+                </nav>
+                
+                <div className="hidden md:flex gap-2">
+                  <Button onClick={() => navigateTo('new_report')} className="text-sm px-4 py-2">
+                    Denunciar Agora
+                  </Button>
+                </div>
+                
+                <div className="md:hidden text-blue-900">
+                  <Icon name="ShieldCheck" size={28} />
+                </div>
+              </div>
+            </header>
+          )}
+
+          <main className="flex-1">
+            {currentView === 'home' && <HomeView />}
+            {currentView === 'new_report' && <ReportFormView />}
+            {currentView === 'token_success' && <TokenSuccessView />}
+            {currentView === 'track_report' && <TrackReportView />}
+            {currentView === 'respond_list' && <RespondListView />}
+            {currentView === 'chat_view' && <ChatView isAdmin={false} />}
+            
+            {currentView === 'admin_login' && <AdminLoginView />}
+            {currentView === 'admin_dashboard' && (isAdminAuth ? <AdminDashboardView /> : <AdminLoginView />)}
+            {currentView === 'admin_report' && <ChatView isAdmin={true} />}
+          </main>
+
+          {!['admin_dashboard', 'admin_report'].includes(currentView) && (
+            <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm border-t-4 border-blue-900 mt-auto">
+              <div className="max-w-4xl mx-auto px-4">
+                <p className="mb-2">© 2026 AF Datalink - Canal de Denúncias Corporativo.</p>
+                <p className="text-xs opacity-60 max-w-2xl mx-auto">
+                  Plataforma independente e segura. Protegemos sua identidade com criptografia avançada. 
+                  Em conformidade com a LGPD e políticas internacionais de Compliance e Ética.
+                </p>
+                <button onClick={() => navigateTo('admin_login')} className="mt-6 opacity-20 hover:opacity-100 transition-opacity" title="Acesso Administrativo">
+                  <Icon name="Lock" size={16} />
+                </button>
+              </div>
+            </footer>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
